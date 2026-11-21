@@ -19,6 +19,15 @@ class Personal extends ASettings {
 
 	#[\Override]
 	public function getSection(): ?string {
-		return $this->manager->isUserScopeEnabled() ? 'workflow' : null;
+		if (!$this->manager->isUserScopeEnabled()) {
+			return null;
+		}
+
+		// do not offer personal Flow settings when no app provides a flow to run
+		if ($this->getOperatorsForScope() === []) {
+			return null;
+		}
+
+		return 'workflow';
 	}
 }

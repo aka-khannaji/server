@@ -47,10 +47,9 @@ abstract class ASettings implements ISettings {
 			$this->entitiesToArray($entities)
 		);
 
-		$operators = $this->manager->getOperatorList();
 		$this->initialStateService->provideInitialState(
 			'operators',
-			$this->operatorsToArray($operators)
+			$this->operatorsToArray($this->getOperatorsForScope())
 		);
 
 		$checks = $this->manager->getCheckList();
@@ -98,6 +97,18 @@ abstract class ASettings implements ISettings {
 	}
 
 	/**
+	 * @return IOperation[] the operators that can be used in the current scope
+	 */
+	protected function getOperatorsForScope(): array {
+		$operators = $this->manager->getOperatorList();
+
+		return array_values(array_filter(
+			$operators,
+			fn (IOperation $operator): bool => $operator->isAvailableForScope($this->getScope())
+		));
+	}
+
+	/**
 	 * @param IEntity[] $entities
 	 * @return array<array-key, array{id: class-string<IEntity>, icon: string, name: string, events: array<array-key, array{eventName: string, displayName: string}>}>
 	 */
@@ -120,8 +131,6 @@ abstract class ASettings implements ISettings {
 	}
 
 	private function operatorsToArray(array $operators): array {
-		$operators = array_filter($operators, fn (IOperation $operator): bool => $operator->isAvailableForScope($this->getScope()));
-
 		return array_map(function (IOperation $operator) {
 			return [
 				'id' => get_class($operator),
